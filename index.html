@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Backtracking: Theory, Visualization and Applications</title>
+<meta name="description" content="An interactive university project explaining backtracking, constraint solving, AI applications and robotics planning.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0f1220;--panel:#171b2e;--line:#2a3050;--tx:#d9def0;--mut:#8e97b8;--cy:#5ad1e6;--am:#ffb454;--co:#ff6b7a;--mi:#7be0a5}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--tx);font:17px/1.65 "Space Grotesk",system-ui,sans-serif}
+code,pre,.mono,button,select,input{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace}
+a{color:var(--cy)}
+nav{position:sticky;top:0;z-index:5;background:#0f1220ee;backdrop-filter:blur(6px);border-bottom:1px solid var(--line);display:flex;gap:1.2rem;padding:.7rem 1.2rem;overflow-x:auto;white-space:nowrap}
+nav a{color:var(--mut);text-decoration:none;font-size:.9rem}
+nav a:hover,nav a:focus-visible{color:var(--cy)}
+main{max-width:1000px;margin:auto;padding:0 1.2rem 4rem}
+section{padding-top:3.5rem}
+h1{font-size:clamp(2.2rem,6vw,3.8rem);line-height:1.05;margin:2.5rem 0 .8rem;letter-spacing:-.02em}
+h2{font-size:1.9rem;margin:0 0 .6rem;letter-spacing:-.01em}
+h3{margin:1.2rem 0 .3rem;font-size:1.1rem}
+p{max-width:68ch}
+.lead{font-size:1.2rem;color:var(--mut)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:1rem}
+.ctl{display:flex;flex-wrap:wrap;gap:.8rem 1.2rem;align-items:center;margin-bottom:.8rem;font-size:.85rem}
+.ctl label{display:flex;gap:.5rem;align-items:center;color:var(--mut)}
+button,select,input[type=text],input[type=number]{background:var(--bg);color:var(--tx);border:1px solid var(--line);border-radius:4px;padding:.4rem .8rem;font-size:.85rem}
+button{cursor:pointer;border-color:var(--cy);color:var(--cy)}
+button:hover{background:var(--cy);color:var(--bg)}
+:focus-visible{outline:2px solid var(--am);outline-offset:2px}
+input[type=range]{accent-color:var(--cy)}
+.stats{display:flex;gap:1.5rem;font-size:.85rem;color:var(--mut);margin:.4rem 0}
+.stats b{color:var(--tx)}
+.scroll{overflow:auto;border:1px solid var(--line);border-radius:4px;background:var(--bg)}
+svg text{font:600 11px "JetBrains Mono",monospace;fill:var(--tx);text-anchor:middle;pointer-events:none}
+svg line{stroke:var(--line);stroke-width:1.5}
+svg line.on{stroke:var(--cy)}
+circle{fill:var(--panel);stroke:var(--mut);stroke-width:1.5;transition:fill .15s}
+circle.cur{fill:var(--cy);stroke:var(--cy)}
+circle.vis{fill:#1d3a4a;stroke:var(--cy)}
+circle.done{fill:var(--panel);stroke:var(--am)}
+circle.bad{fill:var(--co);stroke:var(--co)}
+circle.sol{fill:var(--mi);stroke:var(--mi)}
+svg text.d{fill:var(--bg)}
+.log{height:110px;overflow:auto;font-size:.78rem;color:var(--mut);padding:.5rem;border:1px solid var(--line);border-radius:4px;margin-top:.6rem;white-space:pre-wrap}
+.legend{display:flex;flex-wrap:wrap;gap:1rem;font-size:.8rem;color:var(--mut);margin-top:.5rem}
+.legend i{display:inline-block;width:.8rem;height:.8rem;border-radius:50%;margin-right:.35rem;vertical-align:-1px}
+pre{background:var(--panel);border-left:3px solid var(--cy);padding:1rem;overflow:auto;font-size:.85rem;line-height:1.5}
+.tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem}
+.tabs button.on{background:var(--cy);color:var(--bg)}
+.demo{display:none}.demo.on{display:block}
+#qb{display:grid;width:min(400px,100%);aspect-ratio:1;border:1px solid var(--line)}
+#qb div{display:flex;align-items:center;justify-content:center;font-size:clamp(1rem,4vw,1.9rem);color:var(--am)}
+#qb .c0{background:#1b2038}#qb .c1{background:#242a4a}#qb .x{background:var(--co)}
+#sb{display:grid;grid-template-columns:repeat(9,1fr);width:min(380px,100%);aspect-ratio:1;border:2px solid var(--mut)}
+#sb div{display:flex;align-items:center;justify-content:center;border:1px solid var(--line);color:var(--cy);font-weight:600}
+#sb div.g{color:var(--tx);background:#1f2540}
+#sb div:nth-child(3n){border-right:2px solid var(--mut)}
+#sb div:nth-child(n+19):nth-child(-n+27),#sb div:nth-child(n+46):nth-child(-n+54){border-bottom:2px solid var(--mut)}
+#mb{display:grid;grid-template-columns:repeat(21,1fr);width:min(441px,100%);aspect-ratio:1}
+#mb div{background:var(--panel)}#mb .w{background:#05070f}
+#mb .cur{background:var(--cy)}#mb .dead{background:#3a2a1e}#mb .path{background:var(--mi)}#mb .end{background:var(--am)}
+.row{display:flex;flex-wrap:wrap;gap:1.5rem;align-items:flex-start}
+.tl{border-left:2px solid var(--line);margin:1rem 0;padding-left:1.2rem}
+.tl div{margin-bottom:1.1rem;position:relative}
+.tl div::before{content:"";position:absolute;left:-1.6rem;top:.55rem;width:.6rem;height:.6rem;background:var(--am);border-radius:50%}
+.tl b{color:var(--am)}
+.uses{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem 2rem}
+.uses div{border-left:3px solid var(--line);padding-left:.9rem}
+.uses h3{margin-top:0;color:var(--cy)}
+.facts li{margin-bottom:.7rem}
+footer{border-top:1px solid var(--line);color:var(--mut);padding:1.5rem;text-align:center;font-size:.85rem}
+.byline{text-align:right;color:var(--mut);font-size:.85rem;padding-top:1rem}
+.kw{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.8rem}
+.kw span{border:1px dashed var(--mut);border-radius:4px;padding:.15rem .6rem;font-size:.82rem;cursor:help;color:var(--tx)}
+.kw span:hover,.kw span:focus-visible{border-color:var(--am);color:var(--am)}
+#tip{position:fixed;z-index:20;max-width:290px;background:#0b0e1a;border:1px solid var(--am);border-radius:4px;padding:.55rem .75rem;font-size:.82rem;line-height:1.45;display:none;pointer-events:none}
+.codebar{display:flex;gap:.4rem;align-items:center;margin-top:1rem}
+.codebar .sp{flex:1}
+.codebar button.on{background:var(--cy);color:var(--bg)}
+.codebar+pre{margin-top:.4rem}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem 2rem;margin:1rem 0}
+.three div{border-left:3px solid var(--am);padding-left:.9rem}
+.three h3{margin-top:0;color:var(--am)}
+.flow{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin:1rem 0;font-size:.85rem}
+.flow div{border:1px solid var(--cy);border-radius:4px;padding:.5rem .8rem;max-width:230px}
+.flow span{color:var(--am)}
+.refs{font-size:.88rem;color:var(--mut)}
+#qres{color:var(--mi);margin:.4rem 0;min-height:1.4em}
+.sig{text-align:right}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+
+/* ---------- academic-project additions ---------- */
+.kicker{color:var(--cy);font:600 .75rem "JetBrains Mono",monospace;letter-spacing:.12em;text-transform:uppercase}
+.callout{border-left:3px solid var(--am);background:#1b2038;padding:.8rem 1rem;margin:1rem 0;border-radius:0 5px 5px 0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+.metric{background:var(--bg);border:1px solid var(--line);padding:.85rem;border-radius:5px}
+.metric b{display:block;color:var(--cy);font:600 1.25rem "JetBrains Mono",monospace}
+.formula{overflow:auto;background:#101525;border:1px solid var(--line);padding:1rem;border-radius:5px;font: .95rem "JetBrains Mono",monospace;color:#e8edf9}
+.illustration-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem;margin:1rem 0}
+.illustration{background:var(--panel);border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.illustration svg{display:block;width:100%;height:auto;background:linear-gradient(145deg,#141a2c,#202943)}
+.illustration .body{padding:.85rem}
+.illustration h4{margin:0 0 .35rem;color:var(--cy)}
+.illustration p{margin:.2rem 0;color:var(--mut);font-size:.9rem}
+.figcap{display:block;color:var(--mut);font-size:.78rem;padding:.45rem .8rem;border-top:1px solid var(--line)}
+table.data{width:100%;border-collapse:collapse;font-size:.9rem;margin:1rem 0}
+table.data th,table.data td{padding:.65rem .7rem;border-bottom:1px solid var(--line);text-align:left}
+table.data th{color:var(--cy);font-weight:600}
+table.data td:last-child,table.data th:last-child{text-align:right}
+table.data tr:hover{background:#1b2038}
+.bench-controls{display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin:.8rem 0}
+.bench-controls label{color:var(--mut);font-size:.88rem}
+.note{font-size:.85rem;color:var(--mut)}
+nav a{font-size:.82rem}
+section{scroll-margin-top:65px}
+@media(max-width:620px){body{font-size:16px}main{padding-left:.85rem;padding-right:.85rem}nav{gap:.9rem;padding:.65rem .85rem}.stats{gap:.8rem;flex-wrap:wrap}.illustration-grid{grid-template-columns:1fr}}
+
+.illustration .nd{fill:#171b2e;stroke:#5ad1e6;stroke-width:2}
+.illustration .nd-pruned{fill:#ff6b7a;stroke:#ff6b7a}
+.illustration .nd-sol{fill:#7be0a5;stroke:#7be0a5}
+.illustration .el{stroke:#2a3050;stroke-width:2}
+.illustration .el-active{stroke:#5ad1e6;stroke-width:2.5}
+.illustration .el-pruned{stroke:#ff6b7a;stroke-width:2;stroke-dasharray:4 4}
+.illustration .lbl{font:600 12px "JetBrains Mono",monospace;fill:#d9def0;text-anchor:middle}
+.illustration .s{font-size:10px}
+.illustration .l{text-anchor:start}
+.illustration .red{fill:#ff6b7a}.illustration .grn{fill:#7be0a5}.illustration .cya{fill:#5ad1e6}.illustration .amb{fill:#ffb454}
+.illustration .gl{stroke:#2a3050;stroke-width:1.5}
+.illustration .q{font:700 22px sans-serif;fill:#ffb454;text-anchor:middle}
+.illustration .attack{stroke:#ff6b7a;stroke-width:2.5;stroke-dasharray:5 5}
+.illustration .ring{fill:none;stroke:#ff6b7a;stroke-width:2}
+.illustration .box{fill:#101525;stroke:#2a3050;stroke-width:1.5}
+.illustration .box.g{stroke:#7be0a5}.illustration .box.r{stroke:#ff6b7a}
+.illustration .arrow{stroke:#ffb454;stroke-width:1.5;fill:none;marker-end:url(#arr)}
+.illustration .join{stroke:#ffb454;stroke-width:1.5;fill:none}
+.illustration .obstacle{fill:#ff6b7a;opacity:.55;stroke:none}
+.illustration .ok{stroke:#7be0a5;stroke-width:2.5;fill:none}
+.illustration .fail{stroke:#ff6b7a;stroke-width:2;stroke-dasharray:4 4;fill:none}
+.illustration .robot{fill:#5ad1e6;stroke:#fff;stroke-width:1}
+.illustration .hit{fill:#ff6b7a;stroke:none}
+.illustration .goal{fill:#7be0a5;stroke:none}
+</style>
+</head>
+<body>
+<nav>
+<a href="#explorer">Explorer</a><a href="#overview">Overview</a><a href="#how">How it works</a><a href="#model">Math model</a><a href="#demos">Demos</a><a href="#evaluation">Evaluation</a><a href="#history">History</a><a href="#uses">Uses</a><a href="#ai">AI & robotics</a><a href="#diagrams">Diagrams</a><a href="#limits">Limits</a><a href="#conclusion">Conclusion</a><a href="#references">References</a>
+</nav>
+<main>
+<header>
+<div class="byline mono">Miclos Mihai Sebastian, Robotics 2026</div>
+<h1>Backtracking: try, fail, undo, try again</h1>
+<p class="lead">Backtracking builds a solution one choice at a time and abandons a path the moment it can’t work. Pick a size below and watch a depth-first search walk the tree of choices.</p>
+</header>
+
+<section id="explorer" style="padding-top:1rem">
+<div class="panel">
+<div class="ctl">
+<label>Letters (n) <input id="tn" type="range" min="2" max="5" value="3"> <span id="tnv" class="mono">A–C</span></label>
+<label><input id="tp" type="checkbox" checked> Prune when neighbors are consecutive letters (like A next to B)</label>
+<label>Delay <input id="ts" type="range" min="10" max="600" value="160"></label>
+<button id="tgo" type="button">Run DFS</button>
+</div>
+<div class="stats mono"><span>visited <b id="sv">0</b></span><span>pruned <b id="sp">0</b></span><span>solutions <b id="ss">0</b></span></div>
+<div class="scroll"><svg id="tree"></svg></div>
+<div class="legend"><span><i style="background:var(--cy)"></i>current</span><span><i style="background:#1d3a4a;border:1px solid var(--cy)"></i>on the path</span><span><i style="border:2px solid var(--am)"></i>fully explored, backtracked</span><span><i style="background:var(--co)"></i>pruned</span><span><i style="background:var(--mi)"></i>solution</span></div>
+<div class="kw" aria-label="Key terms (hover or tap for a definition)">
+<span tabindex="0" data-d="Permutation: an ordering of all n items, each used once, where order matters. There are n! of them (6 for A, B, C). They are the leaves of the tree when pruning is off.">permutation</span>
+<span tabindex="0" data-d="Arrangement (k-permutation): an ordered pick of k items out of n. Count: n! / (n-k)!. Every node at depth k in the tree is one, and AB is different from BA.">arrangement</span>
+<span tabindex="0" data-d="Combination: a pick of k items out of n where order does not matter, so AB and BA are the same. Count: n! / (k! (n-k)!). Backtracking gets them by only choosing letters in increasing order.">combination</span>
+<span tabindex="0" data-d="State-space tree: the tree of all partial solutions. Each edge is one choice, each node is the choices made so far. It is never stored, only walked.">state-space tree</span>
+<span tabindex="0" data-d="Depth-first search: follow one branch as deep as possible before trying its siblings. The recursion call stack remembers the current path.">DFS</span>
+<span tabindex="0" data-d="Pruning: cutting off a whole subtree because the partial solution already breaks a rule, so nothing below it can be valid.">pruning</span>
+<span tabindex="0" data-d="Backtrack: undo the most recent choice and try the next option at that level.">backtrack</span>
+<span tabindex="0" data-d="Branching factor: how many choices a node offers. Here it is n at the root, then n-1, n-2, and so on.">branching factor</span>
+</div>
+<div class="log mono" id="tlog"></div>
+</div>
+<p>Each node is a partial arrangement of letters. The search goes as deep as it can, and when a branch breaks the rule (or finishes) it steps back up and tries the next sibling. Turn pruning off to see the full permutation tree, which has n! leaves. That growth is why n stops at 5 here: with 26 letters the tree would have about 4×10²⁶ leaves.</p>
+<p>Three counting ideas show up in every backtracking problem. A <b>permutation</b> orders all n items (n! ways). An <b>arrangement</b> orders only k of them (n!/(n−k)! ways). A <b>combination</b> picks k items and ignores order (n!/(k!(n−k)!) ways). For n=5 and k=2 that is 120, 20 and 10. The tree above enumerates permutations; stop at depth k to get arrangements; force letters to appear in increasing order to get combinations. Hover over the terms under the tree for short definitions.</p>
+</section>
+
+
+<section id="overview">
+  <div class="kicker">Project overview</div>
+  <h2>Abstract and objectives</h2>
+  <p><b>Abstract.</b> This project investigates backtracking as a depth-first search technique for solving problems defined by choices and constraints. It combines interactive visualizations with implementations of classic problems, including N-Queens, Sudoku, maze path finding and Subset Sum. The demonstrations show how a partial candidate is extended, tested and undone when it cannot lead to a valid solution.</p>
+  <div class="grid2">
+    <div class="panel">
+      <h3>Project objectives</h3>
+      <ul>
+        <li>Explain the state-space search model and the choose–explore–un-choose cycle.</li>
+        <li>Implement backtracking for several constraint-based problems.</li>
+        <li>Visualize valid choices, rejected branches and backtracking steps.</li>
+        <li>Evaluate how search effort changes with problem size and pruning.</li>
+        <li>Relate the method to AI planning and robotic task sequencing.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h3>Scope and method</h3>
+      <p>The project uses deterministic constraints and depth-first exploration. Interactive examples are intended to make the algorithm observable; the performance experiment measures node counts and elapsed time for N-Queens. The results describe these implementations and test cases, not every possible backtracking algorithm.</p>
+    </div>
+  </div>
+  <div class="callout"><b>Central idea:</b> a partial solution is retained only while it remains possible to extend it into a valid complete solution. Pruning is correct only when a rejected partial state cannot lead to any valid solution.</div>
+</section>
+
+<section id="how">
+<h2>How it works</h2>
+<p>Backtracking is a systematic way to search for solutions to problems made of a sequence of choices. It explores a tree of partial solutions in depth-first order. At each node it asks whether the partial solution can still lead somewhere; if not, it cuts that whole subtree off. Three verbs describe it: choose, explore, un-choose.</p>
+<div class="codebar">
+<button class="on" data-c="pseudo">Pseudocode</button><button data-c="cpp">C++</button><button data-c="py">Python</button>
+<span class="sp"></span><button id="ccopy">Copy</button>
+</div>
+<pre id="code"></pre>
+<p class="refs">The C++ and Python tabs are a complete N-Queens counter that follows the same template: it prints 92 for n=8.</p>
+<p>The pruning test is where the speed comes from. Brute force would check every complete candidate. Backtracking rejects a bad prefix once and skips every candidate that starts with it.</p>
+</section>
+
+
+<section id="model">
+  <div class="kicker">Formal description</div>
+  <h2>Mathematical model of backtracking</h2>
+  <p>A backtracking problem can be described by a state space, a set of candidate actions, constraints and a goal test. The algorithm searches a tree whose nodes are partial solutions.</p>
+  <div class="grid2">
+    <div class="metric"><b>State</b><span>A partial assignment that records the choices made so far.</span></div>
+    <div class="metric"><b>Candidate</b><span>A possible next choice that extends the current state.</span></div>
+    <div class="metric"><b>Constraint</b><span>A rule that determines whether a partial assignment is still feasible.</span></div>
+    <div class="metric"><b>Goal test</b><span>A condition that identifies a complete valid solution.</span></div>
+  </div>
+  <h3>Example: N-Queens</h3>
+  <p>Represent a partial placement of queens as \(S=(c_0,c_1,\ldots,c_{r-1})\), where \(c_i\) is the column selected for row \(i\), and \(r\) is the next row to fill. Because the algorithm places one queen per row, only column and diagonal conflicts need to be checked against earlier rows.</p>
+  <div class="formula">For every pair of rows i ≠ j:
+  cᵢ ≠ cⱼ                         (different columns)
+  |cᵢ − cⱼ| ≠ |i − j|             (different diagonals)
+
+  Initial state: S = ()
+  Goal condition: r = n
+  Transition: S' = S appended with candidate column c
+  Reject a transition if either constraint is violated.</div>
+  <p>The search tries a candidate column, recursively explores the extended state, and removes that candidate when the recursive call returns. This removal restores the state so the next candidate can be tested.</p>
+  <h3>General recursive structure</h3>
+  <div class="flow"><div>Check goal</div><span>→</span><div>Generate candidates</div><span>→</span><div>Check constraints</div><span>→</span><div>Choose and recurse</div><span>→</span><div>Undo choice</div></div>
+  <p class="note">The exact state representation and validity test depend on the problem. The same general structure can solve puzzles, scheduling problems and selected planning tasks.</p>
+</section>
+
+<section id="demos">
+<h2>Classic problems, solved live</h2>
+<div class="tabs" role="tablist">
+<button class="on" data-t="dq">N-Queens</button><button data-t="ds">Sudoku</button><button data-t="dm">Maze</button><button data-t="du">Subset sum</button>
+</div>
+
+<div class="demo on panel" id="dq">
+<p>Place n queens on an n×n board so none attack each other. One queen per row; try each column; if a queen is attacked, flash red and move on; if a row has no safe column, step back and move the previous queen.</p>
+<div class="ctl"><label>Board size <select id="qn"><option>4</option><option>5</option><option>6</option><option>7</option><option selected>8</option><option>9</option><option>10</option></select></label><label>Delay <input id="qd" type="range" min="5" max="400" value="60"></label><button id="qgo">Solve (animated)</button><button id="qall">Count all solutions</button><button id="qnext">Next solution</button></div>
+<div class="stats mono"><span>placements tried <b id="qs">0</b></span><span>backtracks <b id="qb2">0</b></span><span id="qst"></span></div>
+<p class="mono" id="qres"></p>
+<div id="qb"></div>
+</div>
+
+<div class="demo panel" id="ds">
+<p>Fill each empty cell with a digit 1–9 that doesn’t repeat in its row, column or box. If no digit fits, go back to the previous cell and try its next digit. White digits are the given clues; blue digits are the solver’s current guesses.</p>
+<div class="ctl"><button id="sgo">Solve</button></div>
+<div class="stats mono"><span>guesses <b id="ssn">0</b></span><span>backtracks <b id="ssb">0</b></span></div>
+<div id="sb"></div>
+</div>
+
+<div class="demo panel" id="dm">
+<p>Path finding with backtracking: walk in one direction until you hit a wall or a visited cell, then retreat to the last junction. The maze itself is generated with the same technique (a randomized depth-first carve). Cyan is the current path, brown is a dead end the search backed out of, green is the final route.</p>
+<div class="ctl"><button id="mnew">New maze</button><button id="mgo">Solve</button></div>
+<div id="mb"></div>
+</div>
+
+<div class="demo panel" id="du">
+<p>Find subsets that add up to the target (positive numbers only). For each item the search tries including it, then excluding it. When the running sum passes the target, nothing deeper can work, so it backs out right there.</p>
+<div class="ctl"><label>Numbers <input id="sn" type="text" value="3, 34, 4, 12, 5, 2" size="20"></label><label>Target <input id="st" type="number" value="9" min="1" style="width:5rem"></label><button id="ugo">Run</button></div>
+<div class="log mono" id="ulog" style="height:260px"></div>
+</div>
+</section>
+
+
+<section id="evaluation">
+  <div class="kicker">Performance study</div>
+  <h2>Experimental evaluation: N-Queens</h2>
+  <p>To evaluate the implementation, the following benchmark counts recursive search nodes and measures elapsed time for N-Queens. A node is counted each time the recursive solver enters a state. Results depend on the browser and computer, so elapsed time is informational; node counts are more reproducible.</p>
+  <div class="panel">
+    <div class="bench-controls">
+      <label>Maximum board size
+        <select id="benchN"><option value="8">8</option><option value="9">9</option><option value="10" selected>10</option><option value="11">11</option><option value="12">12</option></select>
+      </label>
+      <button id="benchRun" type="button">Run benchmark</button>
+      <span class="note" id="benchStatus" aria-live="polite">Ready to run.</span>
+    </div>
+    <div class="scroll">
+      <table class="data">
+        <thead><tr><th>Board size (n)</th><th>Solutions</th><th>Search nodes</th><th>Time (ms)</th></tr></thead>
+        <tbody id="benchRows"><tr><td colspan="4">Run the benchmark to populate results.</td></tr></tbody>
+      </table>
+    </div>
+    <p class="note">The benchmark uses the same row-by-row validity rule as the N-Queens demonstration. It counts recursive states, not every individual column check. Run it on the same device and browser when comparing changes.</p>
+  </div>
+  <h3>How to interpret the results</h3>
+  <ul>
+    <li>Solution count is a correctness check against known N-Queens counts.</li>
+    <li>Search nodes indicate how much of the state space the solver explored.</li>
+    <li>Elapsed time includes JavaScript execution and can vary with device load and browser scheduling.</li>
+    <li>Pruning avoids exploring descendants of invalid partial placements, but the worst-case search remains exponential.</li>
+  </ul>
+  <h3>Algorithm comparison</h3>
+  <div class="scroll">
+    <table class="data">
+      <thead><tr><th>Method</th><th>How it explores</th><th>Typical use</th></tr></thead>
+      <tbody>
+        <tr><td>Brute force</td><td>Generates complete candidates and tests them.</td><td>Small spaces; baseline for comparison.</td></tr>
+        <tr><td>Backtracking</td><td>Tests partial candidates and prunes infeasible branches.</td><td>Constraint satisfaction and solution enumeration.</td></tr>
+        <tr><td>Breadth-first search</td><td>Explores states in increasing depth order.</td><td>Shortest path in an unweighted graph.</td></tr>
+        <tr><td>Dynamic programming</td><td>Stores and reuses results for overlapping subproblems.</td><td>Problems with reusable substructure.</td></tr>
+        <tr><td>Branch and bound</td><td>Prunes branches whose bound cannot improve the best solution.</td><td>Combinatorial optimization.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="history">
+<h2>A short history</h2>
+<div class="tl">
+<div><b>1848</b> The eight queens puzzle appears in a German chess magazine, credited to Max Bergmann. Gauss later studied it; the full count of 92 solutions was settled soon after.</div>
+<div><b>1950s</b> The mathematician D. H. Lehmer coins the word “backtrack”.</div>
+<div><b>1960</b> R. J. Walker publishes an early description of backtracking as a computer algorithm for combinatorial problems.</div>
+<div><b>1962</b> The string-processing language SNOBOL is often cited as one of the first to build general backtracking into the language itself.</div>
+<div><b>1965</b> Golomb and Baumert publish “Backtrack Programming”, generalizing the method.</div>
+<div><b>1972</b> Prolog is created; backtracking becomes its core execution model.</div>
+</div>
+<p>Dates and attributions here follow commonly cited sources; double-check them against your course material before presenting.</p>
+</section>
+
+<section id="uses">
+<h2>Where it’s used</h2>
+<div class="uses">
+<div><h3>Puzzles and games</h3><p>Sudoku, N-Queens, crosswords, knight’s tour, word search.</p></div>
+<div><h3>Constraint solving</h3><p>Scheduling, timetables, map coloring, resource assignment.</p></div>
+<div><h3>Logic and SAT</h3><p>The DPLL algorithm behind many SAT solvers is backtracking with smart pruning.</p></div>
+<div><h3>Languages and parsing</h3><p>Prolog resolves queries by backtracking. Many regex engines backtrack when a match fails.</p></div>
+<div><h3>Combinatorial optimization</h3><p>Branch and bound extends backtracking with a cost bound: prune any branch that can’t beat the best answer so far.</p></div>
+<div><h3>Robotics and planning</h3><p>Task and motion planners search sequences of actions, undoing steps that lead to collisions or dead ends.</p></div>
+</div>
+</section>
+
+<section id="ai">
+<h2>Pushing it further: AI, machine learning and robotics</h2>
+<p>Backtracking is more than a classroom trick. It is one of the oldest tools in AI, and the current push is to combine it with learning. First, the three terms people often mix up:</p>
+<div class="three">
+<div><h3>Artificial intelligence</h3><p>The broad goal of building systems that do tasks that normally need human intelligence: reasoning, planning, perception, language. It includes rule and search-based methods as well as learning-based ones.</p></div>
+<div><h3>Machine learning</h3><p>The part of AI where a system improves from data instead of following hand-written rules. It fits a model, such as a neural network, that generalizes statistically.</p></div>
+<div><h3>Robotics</h3><p>Building machines that sense, decide and act in the physical world. It uses AI and ML, plus mechanics, control and electronics.</p></div>
+</div>
+<p><b>The key difference:</b> backtracking is search. It is exact and rule-based: given the rules, it either finds a valid answer or proves none exists, but its cost can explode. Machine learning is approximate: it is fast and copes with messy data, but it comes with no guarantee that an answer obeys the rules. The strongest recent systems combine the two. A learned model guesses which branch looks promising, and the search checks that the result is actually valid.</p>
+<div class="flow"><div>A learned model ranks the choices at this node</div><span>then</span><div>Backtracking tries the best choice and checks the rules</div><span>if it fails</span><div>Undo it and try the next-ranked choice</div></div>
+<h3>Where backtracking appears in AI</h3>
+<ul class="facts">
+<li><b>Planning and constraint solving.</b> Automated planners search sequences of actions and undo any step whose preconditions fail. Scheduling and configuration tools work the same way.</li>
+<li><b>SAT and SMT solvers.</b> Modern solvers use conflict-driven clause learning (CDCL): backtracking plus learning a new rule from each dead end, then jumping back several levels at once. They verify chips and software and also power planners.</li>
+<li><b>Logic programming.</b> Prolog answers queries by trying clauses in order and backtracking on failure.</li>
+<li><b>Game AI.</b> Minimax walks the game tree depth-first. Alpha-beta pruning cuts branches that cannot change the result, which is backtracking’s pruning idea applied to a two-player tree.</li>
+<li><b>Reasoning with language models.</b> Tree-of-Thoughts-style methods let a model propose several next reasoning steps, score them, and go back to an earlier step when a line of thought looks wrong.</li>
+<li><b>Checking neural networks.</b> Verification tools such as Reluplex and Marabou split on whether each ReLU unit is active or inactive, and backtrack when a case turns out to be impossible.</li>
+<li><b>Learned guidance.</b> NeuroSAT showed a network can learn to predict satisfiability; AlphaZero-style systems use a network to steer tree search. Both keep the search and improve how it picks branches.</li>
+</ul>
+<h3>Robotics</h3>
+<p>In task and motion planning, a robot first chooses a symbolic plan (grasp part A, place it, grasp part B). A motion planner then checks that each step is physically possible. If no collision-free motion exists, the planner backtracks and tries another grasp, another order, or another placement. Assembly sequencing and pick-and-place cell planning have the same shape: many ordered choices, many hard constraints.</p>
+<h3>How far can it go?</h3>
+<p>The limit is still exponential growth, so progress comes from searching smarter, not from waiting for faster hardware: better branch ordering (often learned), constraint propagation, clause learning, parallel search, and hybrids where a neural network proposes and a symbolic search verifies. The open challenge is keeping the guarantee of correctness while scaling to far bigger problems. Learning will not replace backtracking, and backtracking will not replace learning; each covers the other’s weakness.</p>
+<p class="refs">Further reading: Yao et al., “Tree of Thoughts” (2023); Katz et al., “Reluplex” (2017); Selsam et al., “NeuroSAT” (2019); Marques-Silva and Sakallah, “GRASP” (1996); Knuth and Moore, “An Analysis of Alpha-Beta Pruning” (1975). Check the details against the originals before citing.</p>
+</section>
+
+<section id="diagrams">
+<div class="kicker">Visual analytics</div>
+<h2>System diagrams and technical illustrations</h2>
+<p>Four diagrams show how pruning, constraint checks and undo steps work in a search tree, on a chessboard, inside a SAT solver, and in a robot planner.</p>
+<div class="illustration-grid">
+
+<div class="illustration">
+<svg viewBox="0 0 400 220" role="img" aria-label="State-space tree with a pruned branch and a solution">
+<line x1="200" y1="30" x2="100" y2="80" class="el-active"/><line x1="200" y1="30" x2="300" y2="80" class="el"/>
+<line x1="100" y1="80" x2="50" y2="140" class="el-active"/><line x1="100" y1="80" x2="150" y2="140" class="el-pruned"/>
+<line x1="50" y1="140" x2="30" y2="190" class="el-active"/><line x1="50" y1="140" x2="70" y2="190" class="el-pruned"/>
+<circle cx="200" cy="30" r="15" class="nd"/><text x="200" y="34" class="lbl s">Root</text>
+<circle cx="100" cy="80" r="12" class="nd"/><text x="100" y="84" class="lbl">A</text>
+<circle cx="300" cy="80" r="12" class="nd"/><text x="300" y="84" class="lbl">B</text>
+<circle cx="50" cy="140" r="12" class="nd"/><text x="50" y="144" class="lbl s">A1</text>
+<circle cx="150" cy="140" r="10" class="nd-pruned"/><text x="168" y="144" class="lbl l red">pruned</text>
+<circle cx="30" cy="190" r="10" class="nd-sol"/><text x="52" y="194" class="lbl l grn">solution</text>
+<circle cx="70" cy="190" r="8" class="nd-pruned"/><text x="86" y="194" class="lbl l red">pruned</text>
+</svg>
+<div class="body"><h4>Figure 1: State-space tree pruning</h4>
+<p>A branch that breaks a constraint (red, dashed) is cut the moment it fails, so nothing below it is ever visited. The cyan path keeps going down to a solution (green).</p></div>
+<span class="figcap">Fig 1. How pruning removes whole subtrees.</span>
+</div>
+
+<div class="illustration">
+<svg viewBox="0 0 400 220" role="img" aria-label="N-Queens conflict check on a 4 by 4 board">
+<rect x="60" y="20" width="160" height="160" fill="#171b2e" stroke="#2a3050" stroke-width="2"/>
+<line x1="100" y1="20" x2="100" y2="180" class="gl"/><line x1="140" y1="20" x2="140" y2="180" class="gl"/><line x1="180" y1="20" x2="180" y2="180" class="gl"/>
+<line x1="60" y1="60" x2="220" y2="60" class="gl"/><line x1="60" y1="100" x2="220" y2="100" class="gl"/><line x1="60" y1="140" x2="220" y2="140" class="gl"/>
+<text x="80" y="48" class="q">♛</text><text x="160" y="88" class="q">♛</text>
+<line x1="80" y1="40" x2="160" y2="120" class="attack"/><line x1="160" y1="80" x2="160" y2="120" class="attack"/>
+<circle cx="160" cy="120" r="16" class="ring"/>
+<text x="235" y="50" class="lbl l">Try row 2, col 2</text>
+<text x="235" y="80" class="lbl l">vs queen (0,0):</text>
+<text x="235" y="98" class="lbl l">|2-0| = |2-0|</text>
+<text x="235" y="116" class="lbl l red">same diagonal ✗</text>
+<text x="235" y="146" class="lbl l">vs queen (1,2):</text>
+<text x="235" y="164" class="lbl l red">same column ✗</text>
+<text x="235" y="196" class="lbl l grn">✓ prune, backtrack</text>
+</svg>
+<div class="body"><h4>Figure 2: N-Queens conflict check</h4>
+<p>Two queens attack each other when the row difference equals the column difference, or when they share a column. The attempt at row 2, column 2 fails both tests, so the search moves on without exploring any deeper rows.</p></div>
+<span class="figcap">Fig 2. Diagonal and column conflict detection.</span>
+</div>
+
+<div class="illustration">
+<svg viewBox="0 0 400 220" role="img" aria-label="DPLL SAT solver loop with backtracking">
+<defs><marker id="arr" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#ffb454"/></marker></defs>
+<rect x="20" y="30" width="100" height="40" rx="4" class="box"/><text x="70" y="54" class="lbl s cya">Unit propagate</text>
+<rect x="150" y="30" width="100" height="40" rx="4" class="box"/><text x="200" y="54" class="lbl s cya">Pure literal</text>
+<rect x="280" y="30" width="100" height="40" rx="4" class="box r"/><text x="330" y="54" class="lbl s red">Conflict?</text>
+<rect x="150" y="130" width="100" height="40" rx="4" class="box g"/><text x="200" y="154" class="lbl s grn">Split variable</text>
+<rect x="280" y="130" width="100" height="40" rx="4" class="box r"/><text x="330" y="154" class="lbl s red">Backtrack</text>
+<line x1="120" y1="50" x2="144" y2="50" class="arrow"/><line x1="250" y1="50" x2="274" y2="50" class="arrow"/>
+<line x1="330" y1="70" x2="330" y2="124" class="arrow"/><text x="338" y="102" class="lbl l s amb">yes</text>
+<path d="M290 70V100H200V124" class="arrow"/><text x="240" y="94" class="lbl s amb">no</text>
+<path d="M150 150H70V76" class="arrow"/>
+<path d="M330 170V200H70V150" class="join"/>
+<text x="200" y="214" class="lbl s">undo the last decision, try its other value</text>
+</svg>
+<div class="body"><h4>Figure 3: DPLL SAT solver loop</h4>
+<p>Propagate what is forced, then split on a variable. On a conflict, undo the last decision and flip it. Modern CDCL solvers also learn a new clause from each conflict so the same mistake is not repeated.</p></div>
+<span class="figcap">Fig 3. Decision loop of a Boolean satisfiability solver.</span>
+</div>
+
+<div class="illustration">
+<svg viewBox="0 0 400 220" role="img" aria-label="Robot motion planning: a colliding path and a collision-free alternative">
+<rect x="120" y="60" width="60" height="100" class="obstacle"/><circle cx="270" cy="100" r="28" class="obstacle"/>
+<path d="M30 180Q70 80 120 70" class="fail"/><circle cx="118" cy="70" r="6" class="hit"/><text x="115" y="52" class="lbl red">Collision</text>
+<path d="M30 180Q80 195 150 185Q250 185 300 140Q340 100 350 45" class="ok"/>
+<circle cx="350" cy="45" r="6" class="goal"/><text x="350" y="32" class="lbl grn">Goal</text>
+<rect x="20" y="170" width="20" height="20" rx="3" class="robot"/><text x="30" y="212" class="lbl cya">Start</text>
+<text x="215" y="208" class="lbl grn">retry: new trajectory</text>
+</svg>
+<div class="body"><h4>Figure 4: Robot task and motion planning</h4>
+<p>A symbolic plan says what to do; a motion planner checks that it is physically possible. When a path collides (red), the planner backtracks and tries another grasp, order or trajectory (green).</p></div>
+<span class="figcap">Fig 4. Collision checking drives the backtrack.</span>
+</div>
+
+</div>
+</section>
+
+<section id="limits">
+<h2>Cost, and how to tame it</h2>
+<p>Worst case, backtracking is exponential: roughly b<sup>d</sup> nodes for branching factor b and depth d, or n! for permutations. Pruning rarely changes that worst case, but it often shrinks real running time by orders of magnitude. Tools that help:</p>
+<ul>
+<li>Check constraints early, as soon as a choice makes them fail.</li>
+<li>Order choices smartly: try the most constrained variable first (the “minimum remaining values” heuristic).</li>
+<li>Propagate constraints forward, e.g. remove a digit from a Sudoku row’s other cells once it’s placed.</li>
+<li>Exploit symmetry so you don’t explore mirror-image solutions.</li>
+</ul>
+<p>A cautionary tale: a badly written regular expression can backtrack exponentially on certain inputs. This “catastrophic backtracking” is a known way to freeze a server (ReDoS).</p>
+</section>
+
+<section id="facts">
+<h2>Interesting facts</h2>
+<ul class="facts">
+<li>The 8×8 board has 92 solutions, but only 12 are distinct once rotations and reflections are treated as the same.</li>
+<li>The number of valid Sudoku grids is about 6.67×10²¹, yet a plain backtracking solver handles most puzzles in a fraction of a second.</li>
+<li>Backtracking is depth-first search over an implicit tree: the tree is never stored, it exists only as the recursion call stack.</li>
+<li>Maze generation by randomized depth-first search is backtracking too, which is why those mazes have long winding corridors and few short loops.</li>
+<li>Backtracking versus dynamic programming: use backtracking to enumerate or find any solution; use dynamic programming when subproblems repeat and you only need an optimal value.</li>
+</ul>
+</section>
+
+<section id="conclusion">
+  <div class="kicker">Closing remarks</div>
+  <h2>Conclusion</h2>
+  <p>Backtracking provides a systematic way to explore large sets of possible solutions while avoiding branches that already violate the problem constraints. The interactive examples demonstrate the same recursive pattern across different domains: define a state, generate a candidate, validate it, explore it and undo it when necessary.</p>
+  <p>The method is especially useful for constraint-satisfaction and combinatorial search problems. Its main limitation is the potential for exponential growth, which makes good state representation, early constraint checks, candidate ordering and other pruning techniques important. In robotics, the same reasoning pattern can support task sequencing and the exploration of alternative plans, although practical motion planning also requires geometric and collision checking.</p>
+  <div class="callout"><b>Project takeaway:</b> backtracking does not make an enormous search space disappear; it makes the search more selective by rejecting impossible partial solutions as early as possible.</div>
+</section>
+<section id="references">
+  <div class="kicker">Sources and further study</div>
+  <h2>References</h2>
+  <p class="note">Use the exact editions and publication details required by your university's citation style. The entries below identify foundational and directly relevant works; verify bibliographic metadata against the original publication before final submission.</p>
+  <ol class="refs">
+    <li>Golomb, S. W., and Baumert, L. D. (1965). “Backtrack Programming.” <i>Journal of the ACM</i>, 12(4), 516–524.</li>
+    <li>Knuth, D. E. (2011). <i>The Art of Computer Programming, Volume 4A: Combinatorial Algorithms, Part 1.</i> Addison-Wesley.</li>
+    <li>Marques-Silva, J. P., and Sakallah, K. A. (1996). “GRASP—A New Search Algorithm for Satisfiability.” <i>Proceedings of ICCAD</i>.</li>
+    <li>Katz, G., et al. (2017). “Reluplex: An Efficient SMT Solver for Verifying Deep Neural Networks.” <i>Computer Aided Verification (CAV)</i>.</li>
+    <li>Selsam, D., et al. (2019). “NeuroSAT: Learning a SAT Solver from Single-Bit Supervision.” <i>International Conference on Learning Representations (ICLR)</i>. <span class="note">Check exact title and proceedings details before citation.</span></li>
+    <li>Yao, S., et al. (2023). “Tree of Thoughts: Deliberate Problem Solving with Large Language Models.” <i>Advances in Neural Information Processing Systems (NeurIPS)</i>.</li>
+    <li>Russell, S., and Norvig, P. (2021). <i>Artificial Intelligence: A Modern Approach</i> (4th ed.). Pearson.</li>
+  </ol>
+</section>
+
+</main>
+<footer class="sig mono">Miclos Mihai Sebastian, Robotics 2026</footer>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms)),L=i=>String.fromCharCode(65+i),NS="http://www.w3.org/2000/svg";
+
+/* ---------- tabs ---------- */
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.tabs button').forEach(x=>x.classList.toggle('on',x===b));
+ document.querySelectorAll('.demo').forEach(d=>d.classList.toggle('on',d.id===b.dataset.t));
+});
+
+/* ---------- letter tree ---------- */
+let tRun=0,nodes=[],root,st={v:0,p:0,s:0};
+function stats(){$('#sv').textContent=st.v;$('#sp').textContent=st.p;$('#ss').textContent=st.s}
+function tlog(m){const l=$('#tlog');l.textContent+=m+"\n";l.scrollTop=l.scrollHeight}
+function build(){
+ tRun++;const n=+$('#tn').value,prune=$('#tp').checked;nodes=[];let leaf=0;st={v:0,p:0,s:0};stats();$('#tlog').textContent='';
+ $('#tnv').textContent='A–'+L(n-1);
+ function mk(path,d,par){
+  const o={path,d,par,ch:[]};nodes.push(o);
+  const a=path.slice(-1),b=path.slice(-2,-1);
+  if(prune&&b&&Math.abs(a.charCodeAt(0)-b.charCodeAt(0))===1){o.bad=1;o.x=leaf++;return o}
+  if(path.length===n){o.sol=1;o.x=leaf++;return o}
+  for(let i=0;i<n;i++){if(!path.includes(L(i)))o.ch.push(mk(path+L(i),d+1,o))}
+  o.x=o.ch.reduce((s,c)=>s+c.x,0)/o.ch.length;return o}
+ root=mk('',0,null);
+ const g=30,W=Math.max(leaf*g+30,300),H=(n+1)*56+30,svg=$('#tree');
+ svg.setAttribute('width',W);svg.setAttribute('height',H);svg.innerHTML='';
+ const px=o=>o.x*g+25,py=o=>o.d*56+25;
+ nodes.forEach(o=>{if(o.par){const e=document.createElementNS(NS,'line');e.setAttribute('x1',px(o.par));e.setAttribute('y1',py(o.par));e.setAttribute('x2',px(o));e.setAttribute('y2',py(o));svg.append(e);o.edge=e}});
+ nodes.forEach(o=>{const c=document.createElementNS(NS,'circle');c.setAttribute('cx',px(o));c.setAttribute('cy',py(o));c.setAttribute('r',11);svg.append(c);o.el=c;
+  const t=document.createElementNS(NS,'text');t.setAttribute('x',px(o));t.setAttribute('y',py(o)+4);t.textContent=o.path?o.path.slice(-1):'∅';svg.append(t);o.t=t});
+}
+const sp=()=>+$('#ts').value,cls=(o,c)=>{o.el.setAttribute('class',c);o.t.setAttribute('class',c==='cur'||c==='bad'||c==='sol'?'d':'')};
+async function dfs(o,id){
+ if(id!==tRun)return;
+ cls(o,'cur');if(o.edge)o.edge.setAttribute('class','on');st.v++;stats();
+ tlog(o.path?`choose ${o.path.slice(-1)}  ->  ${o.path}`:'start at the root');
+ await sleep(sp());
+ if(o.bad){cls(o,'bad');st.p++;stats();tlog(`prune ${o.path}: neighbors are consecutive letters`);await sleep(sp());return}
+ if(o.sol){cls(o,'sol');st.s++;stats();tlog(`solution ${o.path}`);await sleep(sp());return}
+ cls(o,'vis');
+ for(const c of o.ch){await dfs(c,id);if(id!==tRun)return;cls(o,'vis');tlog(`backtrack to ${o.path||'the root'}`);await sleep(sp()/2)}
+ cls(o,'done');
+}
+['tn','tp'].forEach(i=>$('#'+i).oninput=build);
+$('#tgo').onclick=()=>{build();dfs(root,tRun)};
+build();
+
+/* ---------- N-Queens ---------- */
+let qRun=0;
+async function qSolve(){
+ const id=++qRun,n=+$('#qn').value,b=$('#qb');
+ b.style.gridTemplateColumns=`repeat(${n},1fr)`;b.innerHTML='';
+ for(let i=0;i<n*n;i++){const d=document.createElement('div');d.className=((i%n)+(i/n|0))%2?'c1':'c0';b.append(d)}
+ const cells=[...b.children],cols=[];let tries=0,back=0;$('#qst').textContent='';
+ const upd=()=>{$('#qs').textContent=tries;$('#qb2').textContent=back},d=()=>+$('#qd').value;
+ const safe=(r,c)=>cols.every((cc,rr)=>cc!==c&&Math.abs(cc-c)!==r-rr);
+ async function go(r){
+  if(r===n)return true;
+  for(let c=0;c<n;c++){
+   if(id!==qRun)return true;
+   tries++;const cell=cells[r*n+c];
+   if(!safe(r,c)){cell.classList.add('x');upd();await sleep(d()/2);cell.classList.remove('x');continue}
+   cols[r]=c;cell.textContent='♛';upd();await sleep(d());
+   if(await go(r+1))return true;
+   cols.length=r;cell.textContent='';back++;upd();
+  }
+  return false}
+ const ok=await go(0);
+ if(id===qRun)$('#qst').textContent=ok?'first solution found (press "Count all solutions" for the full count)':'no solution for this size';
+}
+let qSols=[],qIdx=0;
+const QT=[(r,c,n)=>[r,c],(r,c,n)=>[r,n-1-c],(r,c,n)=>[n-1-r,c],(r,c,n)=>[n-1-r,n-1-c],(r,c,n)=>[c,r],(r,c,n)=>[c,n-1-r],(r,c,n)=>[n-1-c,r],(r,c,n)=>[n-1-c,n-1-r]];
+function qCanon(s,n){let best;for(const f of QT){const a=Array(n);s.forEach((c,r)=>{const [R,C]=f(r,c,n);a[R]=C});const k=a.join(',');if(!best||k<best)best=k}return best}
+function qAll(n){const sols=[],cols=[];
+ (function go(r){if(r===n){sols.push(cols.slice());return}
+  for(let c=0;c<n;c++){if(cols.every((cc,rr)=>cc!==c&&Math.abs(cc-c)!==r-rr)){cols[r]=c;go(r+1);cols.length=r}}})(0);
+ return sols}
+function qShow(){
+ const n=+$('#qn').value,b=$('#qb');b.style.gridTemplateColumns=`repeat(${n},1fr)`;b.innerHTML='';
+ for(let i=0;i<n*n;i++){const d=document.createElement('div');d.className=((i%n)+(i/n|0))%2?'c1':'c0';b.append(d)}
+ if(qSols.length)qSols[qIdx].forEach((c,r)=>b.children[r*n+c].textContent='♛');
+}
+function qCount(){
+ qRun++;const n=+$('#qn').value;qSols=qAll(n);qIdx=0;
+ const d=new Set(qSols.map(s=>qCanon(s,n))).size;
+ $('#qres').textContent=`n=${n}: ${qSols.length} solutions, ${d} distinct if rotations and reflections count as the same`;
+ $('#qst').textContent=`showing solution 1 of ${qSols.length}`;qShow();
+}
+$('#qall').onclick=qCount;
+$('#qnext').onclick=()=>{if(!qSols.length||qSols[0].length!==+$('#qn').value)qCount();else{qIdx=(qIdx+1)%qSols.length;$('#qst').textContent=`showing solution ${qIdx+1} of ${qSols.length}`;qShow()}};
+$('#qgo').onclick=qSolve;$('#qn').onchange=()=>{qRun++;qSols=[];$('#qres').textContent='';$('#qgo').click()};
+
+/* ---------- Sudoku ---------- */
+const P='530070000600195000098000060800060003400803001700020006060000280000419005000080079';
+let sRun=0,g=[],sc=[];
+function sInit(){g=[...P].map(Number);const b=$('#sb');b.innerHTML='';sc=g.map(v=>{const d=document.createElement('div');if(v){d.textContent=v;d.className='g'}b.append(d);return d})}
+async function sSolve(){
+ const id=++sRun;sInit();let n=0,bk=0;
+ const upd=()=>{$('#ssn').textContent=n;$('#ssb').textContent=bk};
+ const ok=(i,v)=>{const r=i/9|0,c=i%9;for(let k=0;k<9;k++)if(g[r*9+k]===v||g[k*9+c]===v)return false;
+  const br=r-r%3,bc=c-c%3;for(let a=0;a<3;a++)for(let b=0;b<3;b++)if(g[(br+a)*9+bc+b]===v)return false;return true};
+ async function go(i){
+  while(i<81&&g[i])i++;if(i===81)return true;
+  for(let v=1;v<=9;v++){
+   if(id!==sRun)return true;
+   if(ok(i,v)){g[i]=v;sc[i].textContent=v;n++;if(n%2===0){upd();await sleep(6)}
+    if(await go(i+1))return true;
+    g[i]=0;sc[i].textContent='';bk++}
+  }
+  return false}
+ await go(0);upd();
+}
+$('#sgo').onclick=sSolve;sInit();
+
+/* ---------- Maze ---------- */
+const MS=21;let M,mc=[],mRun=0;
+function mGen(){
+ mRun++;M=Array.from({length:MS},()=>Array(MS).fill(1));const s=[[1,1]];M[1][1]=0;
+ while(s.length){
+  const [x,y]=s[s.length-1];
+  const d=[[2,0],[-2,0],[0,2],[0,-2]].sort(()=>Math.random()-.5).filter(([a,b])=>M[y+b]?.[x+a]===1);
+  if(!d.length){s.pop();continue}
+  const [a,b]=d[0];M[y+b/2][x+a/2]=0;M[y+b][x+a]=0;s.push([x+a,y+b]);
+ }
+ const el=$('#mb');el.innerHTML='';mc=[];
+ for(let y=0;y<MS;y++)for(let x=0;x<MS;x++){const d=document.createElement('div');if(M[y][x])d.className='w';el.append(d);mc.push(d)}
+ mc[MS+1].className='cur';mc[(MS-2)*MS+MS-2].className='end';
+}
+async function mSolve(){
+ const id=++mRun,seen=new Set();
+ mc.forEach((d,i)=>{if(!M[(i/MS)|0][i%MS])d.className=''});mc[(MS-2)*MS+MS-2].className='end';
+ async function go(x,y){
+  if(id!==mRun)return true;
+  const k=y*MS+x;if(M[y]?.[x]!==0||seen.has(k))return false;
+  seen.add(k);mc[k].className='cur';await sleep(22);
+  if(x===MS-2&&y===MS-2){mc[k].className='path';return true}
+  for(const [a,b] of [[1,0],[0,1],[-1,0],[0,-1]])if(await go(x+a,y+b)){mc[k].className='path';return true}
+  mc[k].className='dead';await sleep(8);return false}
+ await go(1,1);
+}
+$('#mnew').onclick=mGen;$('#mgo').onclick=mSolve;mGen();
+
+/* ---------- Subset sum ---------- */
+let uRun=0;
+async function uSolve(){
+ const id=++uRun,out=$('#ulog');out.textContent='';
+ const nums=$('#sn').value.split(',').map(Number).filter(x=>x>0).slice(0,8),t=+$('#st').value;
+ const line=(d,m)=>{out.textContent+='  '.repeat(d)+m+'\n';out.scrollTop=out.scrollHeight};
+ async function go(i,cur,sum,d){
+  if(id!==uRun)return;
+  if(sum===t){line(d,`FOUND {${cur.join(', ')}} = ${t}`);return}
+  if(sum>t){line(d,`sum ${sum} is over ${t}: backtrack`);return}
+  if(i===nums.length){line(d,'no items left: backtrack');return}
+  line(d,`include ${nums[i]} -> [${[...cur,nums[i]].join(', ')}] sum ${sum+nums[i]}`);await sleep(110);
+  await go(i+1,[...cur,nums[i]],sum+nums[i],d+1);
+  if(id!==uRun)return;
+  line(d,`exclude ${nums[i]}`);await sleep(110);
+  await go(i+1,cur,sum,d+1);
+ }
+ line(0,`items [${nums.join(', ')}], target ${t}`);
+ await go(0,[],0,0);if(id===uRun)line(0,'search finished');
+}
+$('#ugo').onclick=uSolve;
+
+
+/* ---------- N-Queens performance benchmark ---------- */
+function benchmarkQueens(n){
+  let nodes=0,solutions=0;
+  const cols=[];
+  const start=performance.now();
+  function search(r){
+    nodes++;
+    if(r===n){solutions++;return;}
+    for(let c=0;c<n;c++){
+      let valid=true;
+      for(let i=0;i<r;i++){
+        if(cols[i]===c || Math.abs(cols[i]-c)===r-i){valid=false;break;}
+      }
+      if(valid){cols[r]=c;search(r+1);cols.length=r;}
+    }
+  }
+  search(0);
+  return {n,solutions,nodes,ms:performance.now()-start};
+}
+$('#benchRun').onclick=()=>{
+  const max=+$('#benchN').value,body=$('#benchRows');
+  body.innerHTML='';
+  $('#benchStatus').textContent='Running…';
+  // Yield between sizes so the browser can update the status.
+  (async()=>{
+    for(let n=4;n<=max;n++){
+      const r=benchmarkQueens(n),tr=document.createElement('tr');
+      [r.n,r.solutions,r.nodes,r.ms.toFixed(2)].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});
+      body.append(tr);
+      await sleep(10);
+    }
+    $('#benchStatus').textContent='Complete. Repeat on the same device for a fair comparison.';
+  })();
+};
+
+/* ---------- code toggle ---------- */
+const CODE={
+pseudo:`function solve(state):
+  if is_complete(state):          # base case
+    record(state); return
+  for choice in candidates(state):
+    if is_valid(state, choice):   # the pruning test
+      apply(state, choice)        # choose
+      solve(state)                # explore
+      undo(state, choice)         # un-choose: this is the backtrack`,
+cpp:`#include <iostream>
+#include <vector>
+#include <cstdlib>
+using namespace std;
+
+int n = 8, total = 0;
+vector<int> col;                       // col[r] = column of the queen in row r
+
+bool isValid(int r, int c) {           // the pruning test
+    for (int i = 0; i < r; i++)
+        if (col[i] == c || abs(col[i] - c) == r - i) return false;
+    return true;
+}
+
+void solve(int r) {
+    if (r == n) { total++; return; }   // base case: record
+    for (int c = 0; c < n; c++) {
+        if (isValid(r, c)) {
+            col[r] = c;                // choose
+            solve(r + 1);              // explore
+            col[r] = -1;               // un-choose: this is the backtrack
+        }
+    }
+}
+
+int main() {
+    col.assign(n, -1);
+    solve(0);
+    cout << total << " solutions" << endl;   // 92 for n = 8
+}`,
+py:`n = 8
+col = []                        # col[r] = column of the queen in row r
+total = 0
+
+def is_valid(r, c):             # the pruning test
+    return all(col[i] != c and abs(col[i] - c) != r - i for i in range(r))
+
+def solve(r):
+    global total
+    if r == n:                  # base case: record
+        total += 1
+        return
+    for c in range(n):
+        if is_valid(r, c):
+            col.append(c)       # choose
+            solve(r + 1)        # explore
+            col.pop()           # un-choose: this is the backtrack
+
+solve(0)
+print(total, "solutions")       # 92 for n = 8`};
+let cur='pseudo';
+function showCode(k){cur=k;$('#code').textContent=CODE[k];document.querySelectorAll('.codebar [data-c]').forEach(b=>b.classList.toggle('on',b.dataset.c===k))}
+document.querySelectorAll('.codebar [data-c]').forEach(b=>b.onclick=()=>showCode(b.dataset.c));
+$('#ccopy').onclick=async()=>{try{await navigator.clipboard.writeText(CODE[cur]);$('#ccopy').textContent='Copied';setTimeout(()=>$('#ccopy').textContent='Copy',1200)}catch(e){}};
+showCode('pseudo');
+
+/* ---------- hover definitions ---------- */
+const tip=$('#tip');
+function showTip(el){tip.textContent=el.dataset.d;tip.style.display='block';const r=el.getBoundingClientRect(),w=tip.offsetWidth,h=tip.offsetHeight;
+ tip.style.left=Math.max(8,Math.min(r.left,innerWidth-w-8))+'px';tip.style.top=(r.top>h+16?r.top-h-8:r.bottom+8)+'px'}
+const hideTip=()=>tip.style.display='none';
+document.querySelectorAll('.kw span').forEach(s=>{s.onmouseenter=s.onfocus=()=>showTip(s);s.onmouseleave=s.onblur=hideTip});
+addEventListener('scroll',hideTip,{passive:true});
+</script>
+</body>
+</html>
